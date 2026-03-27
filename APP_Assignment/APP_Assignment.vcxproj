@@ -124,6 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="APP_Assignment.cpp" />
+    <ClCompile Include="resources.cpp" />
+    <ClCompile Include="users.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\..\..\Downloads\A2ResourceList.txt" />
+    <Text Include="..\..\..\..\Downloads\A2UserList.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
