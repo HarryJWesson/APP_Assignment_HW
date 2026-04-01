@@ -126,6 +126,7 @@
     <ClCompile Include="APP_Assignment.cpp" />
     <ClCompile Include="resources.cpp" />
     <ClCompile Include="users.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\..\..\Downloads\A2ResourceList.txt" />

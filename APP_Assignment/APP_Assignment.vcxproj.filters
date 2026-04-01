@@ -24,6 +24,9 @@
     <ClCompile Include="resources.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\..\..\Downloads\A2ResourceList.txt">

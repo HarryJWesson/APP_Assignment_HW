@@ -12,7 +12,7 @@
 // Books, journals borrowed once max. conferences cannot be borrowed.
 // Allow the returning of resources, updating records.
 // List all resources available for lending *
-// Produce a report pf all resources currently loaned out **
+// Produce a report of all resources currently loaned out **
 // Produce a report of all users that have borrowed a resource ***
 // ------[EXTENDED]------
 // * Allow the user to sort asc/desc by title or author
