@@ -6,7 +6,12 @@ class loan {
 		int _personID;
 		int _resourceID;
 	public:
-		;
+		int getPersonID() {
+
+		};
+		int getResourceID() {
+
+		};
 };
 
 class resourcelist {

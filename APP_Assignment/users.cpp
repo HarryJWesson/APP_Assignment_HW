@@ -9,7 +9,9 @@ class person {
 		std::string _name;
 		int borrowLimit;
 	public:
-		;
+		int getID() {
+
+		};
 };
 
 class student : person {
