@@ -6,10 +6,6 @@
 //Functionalities:
 // 
 //------[CORE]------
-// Read in a set of txt files to populate a data structure (books, journals, conference). Assign each a unique ID (string).
-// Read in a set of txt files to populate a data structure (students, staff, libstaff). Assign each a unique ID (int).
-// Allow borrowing of resources, updating records. (MAX) students: 1, staff: 2, libstaff: 0.
-// Books, journals borrowed once max. conferences cannot be borrowed.
 // Allow the returning of resources, updating records.
 // List all resources available for lending *
 // Produce a report of all resources currently loaned out **
@@ -21,9 +17,6 @@
 // Implement a search mechanism that allows users to search for keywords in title/author/acronym. Print to console in alphabetical order
 // An ordered (by occurrence) list of all borrowing/returning activity should be stored, and displayed on the console if desired by the user.
 // ------[END OF LIST]------
-// 
-// List of classes on brief that NEED to be implemented.
-//
 
 #include <iostream>
 #include <fstream>
@@ -38,6 +31,9 @@ using namespace std;
 void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
 void loadResources(vector<unique_ptr<resource>>& library);
 void loadUsers(vector<unique_ptr<person>>& users);
+void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
+void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
+bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
 bool menu();
 
 int main()
@@ -60,7 +56,9 @@ int main()
 void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
     cout << "Loading resources..... \n";
     loadResources(library);
-    cout << &library[1];
+    for (auto& ptr : library) {
+        cout << ptr->getID() << "\n";
+    }
     cout << "Resources loaded!\n";
     cout << "Loading users.....\n";
     loadUsers(users);
@@ -147,5 +145,98 @@ void loadResources(vector<unique_ptr<resource>>& library) {
 
 }
 
-void loadUsers(vector<unique_ptr<person>>& users) { cout << "fun"; }
+void loadUsers(vector<unique_ptr<person>>& users) {
+    ifstream Users("A2UserList.txt");
+    
+    int end{12};
+    int lineNum{ 0 };
+    int id{ 0 };
+
+    while (lineNum < end) {
+        string userTemp;
+
+        getline(Users, userTemp);
+        string type{ userTemp[1] };
+
+        switch (stoi(type)) {
+        case 1:
+            users.push_back(make_unique<student>(userTemp, id));
+            break;
+        case 2:
+            users.push_back(make_unique<staff>(userTemp, id));
+            break;
+        case 3:
+            users.push_back(make_unique<libstaff>(userTemp, id));
+            break;
+        default:
+            break;
+        }
+
+        lineNum++;
+    }
+}
+
 bool menu() { return true; }
+
+bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+
+    bool bookExists{ false };
+    bool personExists{ false };
+
+    // does the book exist?
+    for (auto& ptr : library) {
+        if (ptr->getID() == bookID) {
+            bookExists = true;
+        }
+    }
+
+    // does the person exist?
+    for (auto& ptr : users) {
+        if (ptr->getID() == userID) {
+            personExists = true;
+        }
+    }
+
+    return (bookExists && personExists);
+}
+
+void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+    int userID;
+    int bookID;
+    bool bookBorrowed{ false };
+
+    // if the book and person exist
+    if (validate(userID, bookID, library, users)) {
+
+        // find the book
+        for (auto& ptr : library) {
+            if (ptr->getID() == bookID) {
+                // if its not borrowed then borrow
+                if (!(ptr->checkIfBorrowed())) {
+                    ptr->setBorrowed(true);
+                    cout << "Borrowed!\n";
+                    loans.push_back(make_unique<loan>(userID, bookID));
+                    bookBorrowed = true;
+                }
+                else {
+                    cout << "This resource can not be borrowed.\n";
+                }
+            }
+        }
+
+        // if we borrowed
+        if (bookBorrowed) {
+            // find the user
+            for (auto& ptr : users) {
+                // and take away a token for borrowing
+                if (ptr->getID() == userID) {
+                    if (ptr->getBorrowCount() > 0) { ptr->decBorrow(); }
+                }
+            }
+        }
+    }
+}
+
+void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+
+}

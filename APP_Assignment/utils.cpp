@@ -1,31 +1,49 @@
 // This is the header file for util related classes and functionality.
 //
 
+#include <vector>
+
+using namespace std;
+
 class loan {
 	private:
+
 		int _personID;
 		int _resourceID;
+
 	public:
-		int getPersonID() {
+		// constructors
+		loan(int p, int r) : _personID(p), _resourceID(r) {}
 
-		};
-		int getResourceID() {
+		// getters
+		int getPersonID() { return _personID; };
+		int getResourceID() { return _resourceID; }
 
-		};
+		// setters
 };
 
 class resourcelist {
 	private:
-		int _r_list[];
+
+		vector<int> _r_list;
+
 	public:
+		// constructor
+		resourcelist() : _r_list({}) {};
+
+		// misc
 		void printResourceList() {};
-		void resourceList() {};
 };
 
 class userlist {
 	private:
-		int _u_list[];
+
+		vector<int> _u_list;
+
 	public:
+		// constructor
+		userlist() : _u_list({}) {};
+
+		// misc
 		void printUserList() {};
-		void userList() {};
 };
