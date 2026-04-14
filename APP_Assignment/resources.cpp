@@ -25,7 +25,8 @@ class resource {
 		// getters
 		int getID() { return _ID; }
 		string getTitle() { return title; }
-		virtual bool checkIfBorrowed() { return _isBorrowed; }
+		bool checkIfBorrowed() { return _isBorrowed; }
+		virtual bool checkIfCanLend() { return _canLend; }
 
 		// setters
 		void setTitle(string t) { title = t; }
@@ -88,7 +89,7 @@ class conference : public resource {
 		// getters
 		vector<string>& getYears() { return years; }
 		string getAcronym() { return _acronym; }
-		bool checkIfBorrowed() { return false; }
+		bool checkIfCanLend() { return false; }
 
 		// setters
 		void addYear(string y) { years.push_back(y); }

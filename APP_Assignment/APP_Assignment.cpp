@@ -5,11 +5,6 @@
 
 //Functionalities:
 // 
-//------[CORE]------
-// Allow the returning of resources, updating records.
-// List all resources available for lending *
-// Produce a report of all resources currently loaned out **
-// Produce a report of all users that have borrowed a resource ***
 // ------[EXTENDED]------
 // * Allow the user to sort asc/desc by title or author
 // ** Allow the user to sort asc/desc by title or author
@@ -28,44 +23,50 @@
 
 using namespace std;
 
-void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
-void loadResources(vector<unique_ptr<resource>>& library);
+void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, resourceList& rA);
+void loadResources(vector<unique_ptr<resource>>& library, resourceList& rA);
 void loadUsers(vector<unique_ptr<person>>& users);
-void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
-void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
+void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, userList& uB, resourceList& rl, resourceList& rA);
+void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, userList& uB, resourceList& rL, resourceList& rA);
+void listResources(vector<unique_ptr<resource>>& library, resourceList& rL);
+void listUsers(vector<unique_ptr<person>>& users, userList& uL);
+int getChoice(string fetching);
 bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
-bool menu();
+bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA);
 
 int main()
 {
     // Load in the text files, present the options
     vector<unique_ptr<resource>> library;
     vector<unique_ptr<person>> users;
+    vector<unique_ptr<loan>> loans;
+    userList usersBorrowing;
+    resourceList resourcesLent;
+    resourceList resourcesAvailable;
 
-    loadAllFiles(library, users);
 
-    bool finished{ true };
+    loadAllFiles(library, users, resourcesAvailable);
+
+    bool finished{ false };
+    cout << "----- Welcome to UniLib: The University Library ----- \n";
 
     while (!finished) {
-        cout << "Please Select an Option";
-        menu();
+        cout << "\nPlease Select an Option \n";
+        finished = menu(library, users, loans, usersBorrowing, resourcesLent, resourcesAvailable);
     }
 
 }
 
-void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, resourceList& rA) {
     cout << "Loading resources..... \n";
-    loadResources(library);
-    for (auto& ptr : library) {
-        cout << ptr->getID() << "\n";
-    }
+    loadResources(library, rA);
     cout << "Resources loaded!\n";
     cout << "Loading users.....\n";
     loadUsers(users);
-    cout << "Users loaded!\n";
+    cout << "Users loaded!\n\n ";
 }
 
-void loadResources(vector<unique_ptr<resource>>& library) {
+void loadResources(vector<unique_ptr<resource>>& library, resourceList& rA) {
     ifstream Resources("A2ResourceList.txt");
 
     // skip the opening 6 lines
@@ -143,6 +144,9 @@ void loadResources(vector<unique_ptr<resource>>& library) {
         id++;
     }
 
+    for (int i = 0; i < id; i++) {
+        rA.addItem(i);
+    }
 }
 
 void loadUsers(vector<unique_ptr<person>>& users) {
@@ -150,15 +154,17 @@ void loadUsers(vector<unique_ptr<person>>& users) {
     
     int end{12};
     int lineNum{ 0 };
-    int id{ 0 };
+    int id{ 1 };
 
     while (lineNum < end) {
         string userTemp;
 
         getline(Users, userTemp);
-        string type{ userTemp[1] };
+        string type{ userTemp[0] };
+        int choice{ 0 };
+        choice = stoi(type);
 
-        switch (stoi(type)) {
+        switch (choice) {
         case 1:
             users.push_back(make_unique<student>(userTemp, id));
             break;
@@ -172,38 +178,19 @@ void loadUsers(vector<unique_ptr<person>>& users) {
             break;
         }
 
+        id++;
         lineNum++;
     }
 }
 
-bool menu() { return true; }
-
-bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
-
-    bool bookExists{ false };
-    bool personExists{ false };
-
-    // does the book exist?
-    for (auto& ptr : library) {
-        if (ptr->getID() == bookID) {
-            bookExists = true;
-        }
-    }
-
-    // does the person exist?
-    for (auto& ptr : users) {
-        if (ptr->getID() == userID) {
-            personExists = true;
-        }
-    }
-
-    return (bookExists && personExists);
-}
-
-void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
-    int userID;
-    int bookID;
+void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, userList& uB, resourceList& rL, resourceList& rA) {
+    int userID{ 0 };
+    int bookID{ 0 };
     bool bookBorrowed{ false };
+
+    // get the user and book id
+    userID = getChoice(" user ");
+    bookID = getChoice(" resource ");
 
     // if the book and person exist
     if (validate(userID, bookID, library, users)) {
@@ -212,7 +199,7 @@ void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& libra
         for (auto& ptr : library) {
             if (ptr->getID() == bookID) {
                 // if its not borrowed then borrow
-                if (!(ptr->checkIfBorrowed())) {
+                if (ptr->checkIfCanLend()) {
                     ptr->setBorrowed(true);
                     cout << "Borrowed!\n";
                     loans.push_back(make_unique<loan>(userID, bookID));
@@ -233,10 +220,187 @@ void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& libra
                     if (ptr->getBorrowCount() > 0) { ptr->decBorrow(); }
                 }
             }
+            uB.addItem(userID);
+            rL.addItem(bookID);
+            rA.removeItem(bookID);
         }
     }
 }
 
-void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, userList& uB, resourceList& rL, resourceList& rA) {
+    // this contains multiple validation incase of external interferernce with the txt or the loan vector being untrue.
+    int userID{ 0 };
+    int bookID{ 0 };
+    int pos0{ 0 };
+    int pos1{ 0 };
+    bool bookreturned{ false };
+    bool correctLoan{ false };
 
+    // get the user and book id
+    userID = getChoice(" user ");
+    bookID = getChoice(" resource ");
+
+    // find the record of the loan
+    for (auto& ptr : loans) {
+        if ((ptr->getPersonID() == userID) && (ptr->getResourceID() == bookID)) {
+            correctLoan = true;
+            pos1 = pos0;
+        }
+        pos0++;
+    }
+
+    // delete the record of the loan, regardless if the book or person actually exist.
+    if (correctLoan) { loans.erase(loans.begin() + pos1); }
+
+    // if the book and person exist and it has been loaned by that person
+    if ((validate(userID, bookID, library, users)) && correctLoan) {
+
+        // find the book
+        for (auto& ptr : library) {
+            if (ptr->getID() == bookID) {
+                // if its borrowed then return
+                if (ptr->checkIfBorrowed()) {
+                    ptr->setBorrowed(false);
+                    cout << "returned!\n";
+                    bookreturned = true;
+                }
+                else {
+                    cout << "This resource is already returned.\n";
+                }
+            }
+        }
+
+        // if we returned
+        if (bookreturned) {
+            // find the user
+            for (auto& ptr : users) {
+                // and give a token for borrowing
+                if (ptr->getID() == userID) {
+                    { ptr->incBorrow(); }
+                }
+            }
+            uB.removeItem(userID);
+            rL.removeItem(bookID);
+            rA.addItem(bookID);
+        }
+    }
+}
+
+void listResources(vector<unique_ptr<resource>>& library, resourceList& rL) {
+    vector<int> list = rL.getList();
+
+    cout << "\nList of resources: \n";
+
+    for (auto& ptr : library) {
+        for (int id : list) {
+            if (ptr->getID() == id) {
+                cout << id << " : " << ptr->getTitle() << "\n";
+            }
+        }
+    }
+
+    cout << "\n";
+}
+
+void listUsers(vector<unique_ptr<person>>& users, userList& uL) {
+    vector<int> list = uL.getList();
+
+    cout << "List of users: \n";
+
+    for (auto& ptr : users) {
+        for (int id : list) {
+            if (ptr->getID() == id) {
+                cout << id << " : " << ptr->getName() << "\n";
+            }
+        }
+    }
+
+    cout << "\n";
+}
+
+int getChoice(string fetching) {
+    int x;
+
+    cout << "Please input the" << fetching << "ID : ";
+    cin >> x;
+
+    return x;
+}
+
+bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
+
+    bool bookExists{ false };
+    bool personExists{ false };
+
+    // does the book exist?
+    for (auto& ptr : library) {
+        if (ptr->getID() == bookID) {
+            bookExists = true;
+        }
+    }
+
+    if (!bookExists) { cout << "BOOK NO EXISTS"; }
+
+    // does the person exist?
+    for (auto& ptr : users) {
+        if (ptr->getID() == userID) {
+            personExists = true;
+        }
+    }
+
+    if (!personExists) { cout << "person NO EXISTS"; }
+
+    return (bookExists && personExists);
+}
+
+bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA) {
+    cout << "1. Borrow \n";
+    cout << "2. Return \n";
+    cout << "3. List all available resources \n";
+    cout << "4. Report borrowed resources \n";
+    cout << "5. Report borrowing users \n";
+    cout << "6. Search NOT IMPLEMENTED \n";
+    cout << "7. History NOT IMPLEMENTED \n";
+    cout << "8. Exit \n \n";
+
+
+    int choice{ 0 };
+    cout << "Your Choice: ";
+    cin >> choice;
+
+    while (choice < 1 && choice > 6) {
+        cout << "Invalid choice, please pick again: ";
+        cin >> choice;
+    }
+
+    switch (choice) {
+    case 1:
+        borrow(loans, library, users, uB, rL, rA);
+        break;
+    case 2:
+        returnresource(loans, library, users, uB, rL, rA);
+        break;
+    case 3:
+        listResources(library, rA);
+        break;
+    case 4:
+        listResources(library, rL);
+        break;
+    case 5:
+        listUsers(users, uB);
+        break;
+    case 6:
+        cout << "no";
+        break;
+    case 7: 
+        cout << "no";
+        break;
+    case 8:
+        return true;
+        break;
+    default:
+        cout << "error!";
+        break;
+    }
+    return false;
 }
