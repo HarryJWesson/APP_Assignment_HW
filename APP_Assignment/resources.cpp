@@ -54,6 +54,9 @@ class book : public resource {
 
 		// setters
 		void setAuthor(string a) { _author = a; }
+
+		// misc
+		string asString() override { return _author; }
 };
 
 class journal : public resource {

@@ -6,8 +6,6 @@
 //Functionalities:
 // 
 // ------[EXTENDED]------
-// * Allow the user to sort asc/desc by title or author
-// ** Allow the user to sort asc/desc by title or author
 // *** allow them to save the report to a txt file
 // Implement a search mechanism that allows users to search for keywords in title/author/acronym. Print to console in alphabetical order
 // An ordered (by occurrence) list of all borrowing/returning activity should be stored, and displayed on the console if desired by the user.
@@ -30,9 +28,11 @@ void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& libra
 void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, userList& uB, resourceList& rL, resourceList& rA);
 void listResources(vector<unique_ptr<resource>>& library, resourceList& rL);
 void listUsers(vector<unique_ptr<person>>& users, userList& uL);
-int getChoice(string fetching);
+int pickID(string fetching);
+int getChoice(int max);
 bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
 bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA);
+resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL);
 
 int main()
 {
@@ -189,8 +189,8 @@ void borrow(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>>& libra
     bool bookBorrowed{ false };
 
     // get the user and book id
-    userID = getChoice(" user ");
-    bookID = getChoice(" resource ");
+    userID = pickID(" user ");
+    bookID = pickID(" resource ");
 
     // if the book and person exist
     if (validate(userID, bookID, library, users)) {
@@ -237,8 +237,8 @@ void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>
     bool correctLoan{ false };
 
     // get the user and book id
-    userID = getChoice(" user ");
-    bookID = getChoice(" resource ");
+    userID = pickID(" user ");
+    bookID = pickID(" resource ");
 
     // find the record of the loan
     for (auto& ptr : loans) {
@@ -287,7 +287,8 @@ void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>
 }
 
 void listResources(vector<unique_ptr<resource>>& library, resourceList& rL) {
-    vector<int> list = rL.getList();
+
+    vector<int>list = sortList(library, rL).getList();
 
     cout << "\nList of resources: \n";
 
@@ -318,13 +319,27 @@ void listUsers(vector<unique_ptr<person>>& users, userList& uL) {
     cout << "\n";
 }
 
-int getChoice(string fetching) {
+int pickID(string fetching) {
     int x;
 
     cout << "Please input the" << fetching << "ID : ";
     cin >> x;
 
     return x;
+}
+
+int getChoice(int max) {
+
+    int choice{ 0 };
+    cout << "Your Choice: ";
+    cin >> choice;
+
+    while (choice < 1 && choice > max) {
+        cout << "\nInvalid choice, please pick again: ";
+        cin >> choice;
+    }
+
+    return choice;
 }
 
 bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users) {
@@ -353,7 +368,70 @@ bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vec
     return (bookExists && personExists);
 }
 
+resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
+    int size = library.size();
+    resourceList sorted{};
+
+    cout << "\n1. Title Ascending? \n";
+    cout << "2. Title Descending? \n";
+    cout << "3. Author Ascending? \n";
+    cout << "4. Author Descending? \n\n";
+
+    int choice = getChoice(4);
+    
+    switch (choice) {
+    case 1:
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if ((library[j]->getTitle()) > library[j + 1]->getTitle())
+                    swap(library[j], library[j + 1]);
+            }
+        }
+        break;
+    case 2:
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if ((library[j]->getTitle()) < library[j + 1]->getTitle())
+                    swap(library[j], library[j + 1]);
+            }
+        }
+        break;
+    case 3:
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if ((library[j]->asString()) > library[j + 1]->asString())
+                    swap(library[j], library[j + 1]);
+            }
+        }
+        break;
+    case 4:
+        for (int i = 0; i < size - 1; i++) {
+            for (int j = 0; j < size - 1; j++) {
+                if ((library[j]->asString()) < library[j + 1]->asString())
+                    swap(library[j], library[j + 1]);
+            }
+        }
+        break;
+    default:
+        cout << "Error!";
+        break;
+    }
+
+    
+    for (auto& ptr : library) {
+        for (int id : rL.getList()) {
+            if (ptr->getID() == id) {
+                sorted.addItem(ptr->getID());
+            }
+        }
+    }
+
+    return sorted;
+}
+
 bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA) {
+    
+
     cout << "1. Borrow \n";
     cout << "2. Return \n";
     cout << "3. List all available resources \n";
@@ -363,15 +441,7 @@ bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& use
     cout << "7. History NOT IMPLEMENTED \n";
     cout << "8. Exit \n \n";
 
-
-    int choice{ 0 };
-    cout << "Your Choice: ";
-    cin >> choice;
-
-    while (choice < 1 && choice > 6) {
-        cout << "Invalid choice, please pick again: ";
-        cin >> choice;
-    }
+    int choice = getChoice(8);
 
     switch (choice) {
     case 1:
