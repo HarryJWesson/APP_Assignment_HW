@@ -33,6 +33,7 @@ int getChoice(int max);
 bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users);
 bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA);
 resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL);
+void search(vector<unique_ptr<resource>>& library);
 
 int main()
 {
@@ -50,6 +51,7 @@ int main()
     bool finished{ false };
     cout << "----- Welcome to UniLib: The University Library ----- \n";
 
+    // run the menu till done
     while (!finished) {
         cout << "\nPlease Select an Option \n";
         finished = menu(library, users, loans, usersBorrowing, resourcesLent, resourcesAvailable);
@@ -58,6 +60,7 @@ int main()
 }
 
 void loadAllFiles(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, resourceList& rA) {
+    // load the files and stylise
     cout << "Loading resources..... \n";
     loadResources(library, rA);
     cout << "Resources loaded!\n";
@@ -108,6 +111,7 @@ void loadResources(vector<unique_ptr<resource>>& library, resourceList& rA) {
         getline(Resources, journalName);
         lineNum += 1;
 
+        // ! is a marker to separate the journals
         while (editionTemp != "!") {
             getline(Resources, editionTemp);
             if (editionTemp != "!") { editions.push_back(editionTemp); }
@@ -131,9 +135,11 @@ void loadResources(vector<unique_ptr<resource>>& library, resourceList& rA) {
         getline(Resources, conferenceName);
         lineNum += 1;
 
+        // this will return the acronym assuming theres a space after it
         int pos = conferenceName.find(" ");
         string acronym = conferenceName.substr(0, pos);
 
+        // ! is a marker to separate the cons
         while (yearTemp != "!") {
             getline(Resources, yearTemp);
             if (yearTemp != "!") { years.push_back(yearTemp); }
@@ -144,6 +150,7 @@ void loadResources(vector<unique_ptr<resource>>& library, resourceList& rA) {
         id++;
     }
 
+    // load in all the ids to the resources available list.
     for (int i = 0; i < id; i++) {
         rA.addItem(i);
     }
@@ -156,6 +163,7 @@ void loadUsers(vector<unique_ptr<person>>& users) {
     int lineNum{ 0 };
     int id{ 1 };
 
+    // add the users
     while (lineNum < end) {
         string userTemp;
 
@@ -164,6 +172,7 @@ void loadUsers(vector<unique_ptr<person>>& users) {
         int choice{ 0 };
         choice = stoi(type);
 
+        // depending on opening character shows their role.
         switch (choice) {
         case 1:
             users.push_back(make_unique<student>(userTemp, id));
@@ -288,10 +297,12 @@ void returnresource(vector<unique_ptr<loan>>& loans, vector<unique_ptr<resource>
 
 void listResources(vector<unique_ptr<resource>>& library, resourceList& rL) {
 
+    // sort the list according to user choice
     vector<int>list = sortList(library, rL).getList();
 
     cout << "\nList of resources: \n";
 
+    // and print them using the pointers
     for (auto& ptr : library) {
         for (int id : list) {
             if (ptr->getID() == id) {
@@ -308,6 +319,7 @@ void listUsers(vector<unique_ptr<person>>& users, userList& uL) {
 
     cout << "List of users: \n";
 
+    // print the users and ids
     for (auto& ptr : users) {
         for (int id : list) {
             if (ptr->getID() == id) {
@@ -320,8 +332,10 @@ void listUsers(vector<unique_ptr<person>>& users, userList& uL) {
 }
 
 int pickID(string fetching) {
+    // simple function for reuse on fetching different items from user
     int x;
 
+    // this is used with "user" or "resource"
     cout << "Please input the" << fetching << "ID : ";
     cin >> x;
 
@@ -329,11 +343,13 @@ int pickID(string fetching) {
 }
 
 int getChoice(int max) {
+    // for menu or number fetching
 
     int choice{ 0 };
     cout << "Your Choice: ";
     cin >> choice;
 
+    // make sure its valid
     while (choice < 1 && choice > max) {
         cout << "\nInvalid choice, please pick again: ";
         cin >> choice;
@@ -354,7 +370,7 @@ bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vec
         }
     }
 
-    if (!bookExists) { cout << "BOOK NO EXISTS"; }
+    if (!bookExists) { cout << "BOOK DOESN'T EXISTS"; }
 
     // does the person exist?
     for (auto& ptr : users) {
@@ -363,7 +379,7 @@ bool validate(int userID, int bookID, vector<unique_ptr<resource>>& library, vec
         }
     }
 
-    if (!personExists) { cout << "person NO EXISTS"; }
+    if (!personExists) { cout << "PERSON DOESN'T EXISTS"; }
 
     return (bookExists && personExists);
 }
@@ -372,6 +388,7 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
     int size = library.size();
     resourceList sorted{};
 
+    // get what the user wants to sort by
     cout << "\n1. Title Ascending? \n";
     cout << "2. Title Descending? \n";
     cout << "3. Author Ascending? \n";
@@ -379,8 +396,11 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
 
     int choice = getChoice(4);
     
+    // and select the sort accordingly
+    // bubble sort is used. no early break so a bit inefficient for long lists.
     switch (choice) {
     case 1:
+        // title alp asc
         for (int i = 0; i < size - 1; i++) {
             for (int j = 0; j < size - 1; j++) {
                 if ((library[j]->getTitle()) > library[j + 1]->getTitle())
@@ -389,6 +409,7 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
         }
         break;
     case 2:
+        // title alp desc
         for (int i = 0; i < size - 1; i++) {
             for (int j = 0; j < size - 1; j++) {
                 if ((library[j]->getTitle()) < library[j + 1]->getTitle())
@@ -397,6 +418,7 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
         }
         break;
     case 3:
+        // author (or title) alp asc
         for (int i = 0; i < size - 1; i++) {
             for (int j = 0; j < size - 1; j++) {
                 if ((library[j]->asString()) > library[j + 1]->asString())
@@ -405,6 +427,7 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
         }
         break;
     case 4:
+        // author (or title) alp desc
         for (int i = 0; i < size - 1; i++) {
             for (int j = 0; j < size - 1; j++) {
                 if ((library[j]->asString()) < library[j + 1]->asString())
@@ -417,7 +440,7 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
         break;
     }
 
-    
+    // create the resource list for printing
     for (auto& ptr : library) {
         for (int id : rL.getList()) {
             if (ptr->getID() == id) {
@@ -429,15 +452,31 @@ resourceList sortList(vector<unique_ptr<resource>>& library, resourceList& rL) {
     return sorted;
 }
 
+void search(vector<unique_ptr<resource>>& library) {
+    string query;
+
+    // get what they want to search for
+    cout << "\nEnter your search: ";
+    cin >> query;
+    cout << "\n";
+
+    // check the library and if the name contains the string then print it
+    for (auto& ptr : library) {
+        if (ptr->getTitle().find(query,0) != string::npos) {
+            cout << ptr -> getID() << " : " << ptr->getTitle() << "\n";
+        }
+    }
+}
+
 bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& users, vector<unique_ptr<loan>>& loans, userList& uB, resourceList& rL, resourceList& rA) {
-    
+    // simple switch case menu
 
     cout << "1. Borrow \n";
     cout << "2. Return \n";
     cout << "3. List all available resources \n";
     cout << "4. Report borrowed resources \n";
     cout << "5. Report borrowing users \n";
-    cout << "6. Search NOT IMPLEMENTED \n";
+    cout << "6. Search \n";
     cout << "7. History NOT IMPLEMENTED \n";
     cout << "8. Exit \n \n";
 
@@ -460,7 +499,7 @@ bool menu(vector<unique_ptr<resource>>& library, vector<unique_ptr<person>>& use
         listUsers(users, uB);
         break;
     case 6:
-        cout << "no";
+        search(library);
         break;
     case 7: 
         cout << "no";
